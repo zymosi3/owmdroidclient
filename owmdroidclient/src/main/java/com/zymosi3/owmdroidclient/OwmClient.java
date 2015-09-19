@@ -2,20 +2,19 @@ package com.zymosi3.owmdroidclient;
 
 import android.util.Log;
 
+import org.apache.commons.io.IOUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 
 /**
- *
+ * Performs requests to Open Weather Map API
  */
 public class OwmClient {
 
@@ -37,8 +36,14 @@ public class OwmClient {
         this.apiKey = apiKey;
     }
 
+    /**
+     * Gets current weather by latitude and longitude
+     * @throws OwmClientException if something went wrong and you should retry your request
+     */
     @SuppressWarnings("unchecked")
     public Weather getWeather(double lat, double lon) throws OwmClientException {
+        Log.d(LOG_TAG, "getWeather, lat = " + lat + ", lon = " + lon);
+
         StringBuilder urlBuilder = new StringBuilder(WEATHER_URL).
                 append("?").
                 append(LAT).append("=").append(lat).
@@ -49,6 +54,7 @@ public class OwmClient {
 
         try {
             URL url = new URL(urlBuilder.toString());
+            Log.d(LOG_TAG, "getWeather url = '" + url + "'");
             HttpURLConnection connection;
             try {
                 connection = (HttpURLConnection) url.openConnection();
@@ -67,11 +73,15 @@ public class OwmClient {
                     throw new OwmClientException("OWM response code " + response);
 
                 try (InputStream inputStream = connection.getInputStream()) {
-                    String content = readIt(inputStream, 2048);
+                    String content = IOUtils.toString(inputStream, "UTF-8");
                     Log.d(LOG_TAG, "getWeather response content " + content);
                     JSONObject jsonObject = new JSONObject(content);
+                    City city = new City(
+                            jsonObject.getString("name"),
+                            jsonObject.getInt("id")
+                    );
                     double temp = jsonObject.getJSONObject("main").getDouble("temp");
-                    return new Weather(temp);
+                    return new Weather(city, temp);
                 }
             } catch (IOException e) {
                 throw new OwmClientException("Failed to execute the request", e);
@@ -79,19 +89,7 @@ public class OwmClient {
                 connection.disconnect();
             }
         } catch (MalformedURLException | ProtocolException | JSONException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    // Reads an InputStream and converts it to a String.
-    public String readIt(InputStream stream, int len) {
-        try {
-            Reader reader = new InputStreamReader(stream, "UTF-8");
-            char[] buffer = new char[len];
-            reader.read(buffer);
-            return new String(buffer);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Unexpected error", e);
         }
     }
 }

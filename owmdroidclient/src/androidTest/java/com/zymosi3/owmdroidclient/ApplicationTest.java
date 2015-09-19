@@ -11,6 +11,8 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
     public void testGetWeather() throws Exception {
         OwmClient owmClient = new OwmClient("set API key here");
         Weather weather = owmClient.getWeather(54.9450754, 73.3782123);
+        assertEquals("Omsk", weather.city.cityName);
+        assertEquals(1496153, weather.city.cityId);
         assertTrue(weather.temp > 0);
     }
 }
