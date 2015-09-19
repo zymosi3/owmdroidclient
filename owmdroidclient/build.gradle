@@ -1,4 +1,9 @@
 apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+sourceSets {
+    main.java.srcDirs += 'src/main/kotlin'
+}
 
 android {
     compileSdkVersion 23
