@@ -14,5 +14,6 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
         assertEquals("Omsk", weather.getCity().getName());
         assertEquals(1496153, weather.getCity().getId());
         assertTrue(weather.getTemp() > 0);
+        assertTrue(weather.getTime() > 0);
     }
 }

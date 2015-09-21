@@ -30,10 +30,14 @@ public class City(public val name: String, public val id: Int) {
     }
 }
 
-public class Weather(public val city: City, public val temp: Double) {
+public class Weather(
+        public val city: City,
+        public val temp: Double,
+        public val time: Long
+) {
 
     override fun toString(): String {
-        return "Weather{city='$city' , temp=$temp}"
+        return "Weather{city='$city' , temp=$temp, time=$time}"
     }
 }
 
@@ -107,8 +111,12 @@ public class OwmClient(private val apiKey: String) {
         return getJSONObject("main").getDouble("temp")
     }
 
+    private fun JSONObject.time(): Long {
+        return getLong("dt")
+    }
+
     private fun JSONObject.weather(): Weather {
-        return Weather(city(), temp())
+        return Weather(city(), temp(), time())
     }
 
     private fun URL.httpGet(): HttpURLConnection {
