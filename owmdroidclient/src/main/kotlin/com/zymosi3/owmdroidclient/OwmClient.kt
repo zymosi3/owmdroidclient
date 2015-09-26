@@ -1,6 +1,7 @@
 package com.zymosi3.owmdroidclient
 
 import android.util.Log
+import com.zymosi3.util.logThreadName
 import org.apache.commons.io.IOUtils
 import org.json.JSONObject
 import java.io.IOException
@@ -74,14 +75,14 @@ public class OwmClient(private val apiKey: String) {
      * @throws RuntimeException if caught unexpected error
      */
     public fun getWeather(lat: Double, lon: Double): Weather {
-        Log.d(LOG_TAG, "getWeather, lat = $lat, lon = $lon")
+        Log.d(LOG_TAG, "${logThreadName()} getWeather, lat = $lat, lon = $lon")
 
         val urlBuilder = StringBuilder(WEATHER_URL).
                 append("?").appendParam(LAT, lat).append("&").appendParam(LON, lon).appendApiKey()
 
         try {
             val url = URL(urlBuilder.toString())
-            Log.d(LOG_TAG, "getWeather url = '$url'")
+            Log.d(LOG_TAG, "${logThreadName()} getWeather url = '$url'")
             val httpGet = url.httpGet()
             httpGet.connect()
             try {
@@ -90,7 +91,7 @@ public class OwmClient(private val apiKey: String) {
                     throw OwmClientException("OWM response code " + response)
 
                 val content = httpGet.content()
-                Log.d(LOG_TAG, "getWeather response content " + content)
+                Log.d(LOG_TAG, "${logThreadName()} getWeather response content " + content)
                 val jsonObject = JSONObject(content)
                 return jsonObject.weather()
             } finally {
