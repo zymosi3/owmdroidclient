@@ -1,7 +1,9 @@
 package com.zymosi3.owmdroidclient
 
+import android.os.AsyncTask
 import android.util.Log
 import com.zymosi3.util.logThreadName
+import com.zymosi3.util.retry
 import org.apache.commons.io.IOUtils
 import org.json.JSONObject
 import java.io.IOException
@@ -13,7 +15,7 @@ public class City(public val name: String, public val id: Int) {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true;
-        if (other == null || javaClass  != javaClass ) return false;
+        if (other == null || other.javaClass  != javaClass ) return false;
 
         val city = other as City;
 
@@ -38,7 +40,7 @@ public class Weather(
 ) {
 
     override fun toString(): String {
-        return "Weather{city='$city' , temp=$temp, time=$time}"
+        return "Weather{city='$city', temp=$temp, time=$time}"
     }
 }
 
@@ -82,7 +84,6 @@ public class OwmClient(private val apiKey: String) {
 
         try {
             val url = URL(urlBuilder.toString())
-            Log.d(LOG_TAG, "${logThreadName()} getWeather url = '$url'")
             val httpGet = url.httpGet()
             httpGet.connect()
             try {
@@ -102,6 +103,30 @@ public class OwmClient(private val apiKey: String) {
         } catch (t: Throwable) {
             throw RuntimeException("Unexpected error", t)
         }
+    }
+
+    /**
+     * Gets current weather by latitude and longitude in separate thread.
+     * When weather received the listener will be called in worker thread.
+     */
+    public fun getWeatherAsync(lat: Double, lon: Double, listener: (w: Weather?, t: Throwable?) -> Unit) {
+        GetWeatherAsync(lat, lon, listener).execute()
+    }
+
+    /**
+     * Gets current weather by latitude and longitude in separate thread.
+     * When weather received the listener will be called in worker thread.
+     * If any error occurs the worker will sleep for retrySleepMs and retry to get weather.
+     * If error occurs more than retryN times exception will be rethrown.
+     */
+    public fun getWeatherAsync(
+            lat: Double,
+            lon: Double,
+            retryN: Int,
+            retrySleepMs: Int,
+            listener: (w: Weather?, t: Throwable?) -> Unit
+    ) {
+        GetWeatherAsync(lat, lon, retryN, retrySleepMs, listener).execute()
     }
 
     private fun JSONObject.city(): City {
@@ -141,5 +166,33 @@ public class OwmClient(private val apiKey: String) {
 
     private fun StringBuilder.appendApiKey(): StringBuilder {
         return append("&").appendParam(API_KEY, apiKey);
+    }
+
+    private inner class GetWeatherAsync(
+            val lat: Double,
+            val lon: Double,
+            val retryN: Int,
+            val retrySleepMs: Int,
+            val listener: (w: Weather?, t: Throwable?) -> Unit
+    ) : AsyncTask<Unit, Unit, Unit>() {
+
+        constructor(lat: Double, lon: Double, listener: (w: Weather?, t: Throwable?) -> Unit) :
+        this(lat, lon, 1, 0, listener)
+
+        override fun doInBackground(vararg params: Unit?): Unit? {
+            try {
+                retry(
+                        retryN,
+                        retrySleepMs,
+                        fun(tryN: Int) {
+                            Log.d(LOG_TAG, "${logThreadName()} Get Weather in background, try #$tryN.")
+                            listener(getWeather(lat, lon), null)
+                        }
+                )
+            } catch (e: Exception) {
+                listener(null, e)
+            }
+            return null
+        }
     }
 }
