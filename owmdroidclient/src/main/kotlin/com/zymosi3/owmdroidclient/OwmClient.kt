@@ -10,47 +10,6 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
-
-public class City(public val name: String, public val id: Int) {
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true;
-        if (other == null || other.javaClass  != javaClass ) return false;
-
-        val city = other as City;
-
-        return id == city.id && name == city.name
-    }
-
-    override fun hashCode(): Int {
-        var result = name.hashCode()
-        result = 31 * result + id;
-        return result;
-    }
-
-    override fun toString(): String {
-        return "City{name='$name' , id=$id}"
-    }
-}
-
-public class Weather(
-        public val city: City,
-        public val temp: Double,
-        public val time: Long
-) {
-
-    override fun toString(): String {
-        return "Weather{city='$city', temp=$temp, time=$time}"
-    }
-}
-
-public class OwmClientException : RuntimeException {
-
-    constructor(detailMessage: String?, throwable: Throwable?) : super(detailMessage, throwable)
-
-    constructor (detailMessage: String?) : super(detailMessage)
-}
-
 /**
  * Performs requests to Open Weather Map API
  */
@@ -94,7 +53,7 @@ public class OwmClient(private val apiKey: String) {
                 val content = httpGet.content()
                 Log.d(LOG_TAG, "${logThreadName()} getWeather response content " + content)
                 val jsonObject = JSONObject(content)
-                return jsonObject.weather()
+                return jsonObject.weather
             } finally {
                 httpGet.disconnect()
             }
@@ -127,22 +86,6 @@ public class OwmClient(private val apiKey: String) {
             listener: (w: Weather?, t: Throwable?) -> Unit
     ) {
         GetWeatherAsync(lat, lon, retryN, retrySleepMs, listener).execute()
-    }
-
-    private fun JSONObject.city(): City {
-        return City(getString("name"), getInt("id"))
-    }
-
-    private fun JSONObject.temp(): Double {
-        return getJSONObject("main").getDouble("temp")
-    }
-
-    private fun JSONObject.time(): Long {
-        return getLong("dt")
-    }
-
-    private fun JSONObject.weather(): Weather {
-        return Weather(city(), temp(), time())
     }
 
     private fun URL.httpGet(): HttpURLConnection {
@@ -195,4 +138,11 @@ public class OwmClient(private val apiKey: String) {
             return null
         }
     }
+}
+
+public class OwmClientException : RuntimeException {
+
+    constructor(detailMessage: String?, throwable: Throwable?) : super(detailMessage, throwable)
+
+    constructor (detailMessage: String?) : super(detailMessage)
 }

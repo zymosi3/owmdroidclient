@@ -48,9 +48,18 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
     }
 
     private void assertWeather(Weather weather) {
-        assertEquals("Omsk", weather.getCity().getName());
-        assertEquals(1496153, weather.getCity().getId());
-        assertTrue(weather.getTemp() > 0);
+        assertTrue(weather.getId() > 0);
         assertTrue(weather.getTime() > 0);
+        assertEquals(1496153, weather.getCityId());
+        assertEquals("Omsk", weather.getCityName());
+        assertTrue(weather.getTemperature() > 0);
+        assertTrue(weather.getPressure() > 0);
+        assertTrue(weather.getHumidity() > 0);
+        assertTrue(weather.getVisibility() > 0);
+        assertTrue(weather.getWindSpeed() > 0);
+        assertTrue(weather.getWindDegree() > 0);
+        assertTrue(weather.getClouds() > 0);
+        assertNotNull(weather.getDescription());
+        assertNotNull(weather.getIcon());
     }
 }
