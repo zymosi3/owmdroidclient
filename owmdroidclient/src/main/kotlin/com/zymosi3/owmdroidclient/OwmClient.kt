@@ -31,12 +31,15 @@ public class OwmClient(private val apiKey: String) {
     }
 
     /**
-     * Gets current weather by latitude and longitude
+     * Gets current weather by latitude and longitude.
+     * If some field is absent in owm response (this can happen) the of this field from default will be used.
      * @throws OwmClientException if something went wrong and you should retry your request
      * @throws RuntimeException if caught unexpected error
      */
-    public fun getWeather(lat: Double, lon: Double): Weather {
+    public fun getWeather(lat: Double, lon: Double, default: Weather): Weather {
         Log.d(LOG_TAG, "${logThreadName()} getWeather, lat = $lat, lon = $lon")
+
+        defaultWeather = default
 
         val urlBuilder = StringBuilder(WEATHER_URL).
                 append("?").appendParam(LAT, lat).append("&").appendParam(LON, lon).appendApiKey()
@@ -68,8 +71,8 @@ public class OwmClient(private val apiKey: String) {
      * Gets current weather by latitude and longitude in separate thread.
      * When weather received the listener will be called in worker thread.
      */
-    public fun getWeatherAsync(lat: Double, lon: Double, listener: (w: Weather?, t: Throwable?) -> Unit) {
-        GetWeatherAsync(lat, lon, listener).execute()
+    public fun getWeatherAsync(lat: Double, lon: Double, default: Weather, listener: (w: Weather?, t: Throwable?) -> Unit) {
+        GetWeatherAsync(lat, lon, default, listener).execute()
     }
 
     /**
@@ -81,11 +84,12 @@ public class OwmClient(private val apiKey: String) {
     public fun getWeatherAsync(
             lat: Double,
             lon: Double,
+            default: Weather,
             retryN: Int,
             retrySleepMs: Int,
             listener: (w: Weather?, t: Throwable?) -> Unit
     ) {
-        GetWeatherAsync(lat, lon, retryN, retrySleepMs, listener).execute()
+        GetWeatherAsync(lat, lon, default, retryN, retrySleepMs, listener).execute()
     }
 
     private fun URL.httpGet(): HttpURLConnection {
@@ -114,13 +118,14 @@ public class OwmClient(private val apiKey: String) {
     private inner class GetWeatherAsync(
             val lat: Double,
             val lon: Double,
+            val default: Weather,
             val retryN: Int,
             val retrySleepMs: Int,
             val listener: (w: Weather?, t: Throwable?) -> Unit
     ) : AsyncTask<Unit, Unit, Unit>() {
 
-        constructor(lat: Double, lon: Double, listener: (w: Weather?, t: Throwable?) -> Unit) :
-        this(lat, lon, 1, 0, listener)
+        constructor(lat: Double, lon: Double, default: Weather, listener: (w: Weather?, t: Throwable?) -> Unit) :
+        this(lat, lon, default, 1, 0, listener)
 
         override fun doInBackground(vararg params: Unit?): Unit? {
             try {
@@ -129,7 +134,7 @@ public class OwmClient(private val apiKey: String) {
                         retrySleepMs,
                         fun(tryN: Int) {
                             Log.d(LOG_TAG, "${logThreadName()} Get Weather in background, try #$tryN.")
-                            listener(getWeather(lat, lon), null)
+                            listener(getWeather(lat, lon, default), null)
                         }
                 )
             } catch (e: Exception) {

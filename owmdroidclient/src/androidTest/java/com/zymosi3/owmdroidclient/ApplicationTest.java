@@ -13,20 +13,24 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
     private static final double LAT = 54.9450754;
     private static final double LON = 73.3782123;
 
+    private static final Weather defaultWeather = new Weather(
+            -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, "", ""
+    );
+
     public ApplicationTest() {
         super(Application.class);
     }
 
     public void testGetWeather() throws Exception {
         OwmClient owmClient = new OwmClient("set API key here");
-        Weather weather = owmClient.getWeather(LAT, LON);
+        Weather weather = owmClient.getWeather(LAT, LON, defaultWeather);
         assertWeather(weather);
     }
 
     public void testGetWeatherAsync() throws Exception {
         OwmClient owmClient = new OwmClient("set API key here");
         final AtomicReference<Weather> weatherRef = new AtomicReference<>();
-        owmClient.getWeatherAsync(LAT, LON, new Function2<Weather, Throwable, Unit>() {
+        owmClient.getWeatherAsync(LAT, LON, defaultWeather, new Function2<Weather, Throwable, Unit>() {
             @Override
             public Unit invoke(Weather weather, Throwable t) {
                 weatherRef.set(weather);
@@ -56,9 +60,9 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
         assertTrue(weather.getPressure() > 0);
         assertTrue(weather.getHumidity() > 0);
         assertTrue(weather.getVisibility() > 0);
-        assertTrue(weather.getWindSpeed() > 0);
-        assertTrue(weather.getWindDegree() > 0);
-        assertTrue(weather.getClouds() > 0);
+        assertTrue(weather.getWindSpeed() >= 0);
+        assertTrue(weather.getWindDegree() >= 0);
+        assertTrue(weather.getClouds() >= 0);
         assertNotNull(weather.getDescription());
         assertNotNull(weather.getIcon());
     }
