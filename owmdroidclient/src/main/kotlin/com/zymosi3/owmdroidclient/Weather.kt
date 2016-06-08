@@ -23,6 +23,35 @@ public class Weather(
         public val icon: String
 ) {
 
+    public val iconRes: Int
+        get() = when(icon) {
+            "01d" -> R.drawable.i01d
+            "01n" -> R.drawable.i01n
+            "02d" -> R.drawable.i02d
+            "02n" -> R.drawable.i02n
+            "03d" -> R.drawable.i03d
+            "03n" -> R.drawable.i03n
+            "04d" -> R.drawable.i04d
+            "04n" -> R.drawable.i04n
+            "09d" -> R.drawable.i09d
+            "09n" -> R.drawable.i09n
+            "10d" -> R.drawable.i10d
+            "10n" -> R.drawable.i10n
+            "11d" -> R.drawable.i11d
+            "11n" -> R.drawable.i11n
+            "13d" -> R.drawable.i13d
+            "13n" -> R.drawable.i13n
+            "50d" -> R.drawable.i50d
+            "50n" -> R.drawable.i50n
+            else -> R.drawable.i01d
+        }
+
+    public val celsiusTemperature: Double
+        get() = temperature - 273.15
+
+    public val fahrenheitTemperature: Double
+        get() = (temperature * (9.0 / 5.0)) - 459.67
+
     override fun toString(): String {
         return "Weather{id=$id, time=$time, cityId=$cityId, cityName=$cityName, " +
                 "temperature=$temperature, pressure=$pressure, humidity=$humidity, " +
@@ -51,7 +80,7 @@ private fun <R> withDefault(block: () -> R, default: R): R {
 
 public val JSONObject.id: Int
     get() = withDefault(
-            {getJSONArray("weather").get(0) as JSONObject getInt("id")},
+            {(getJSONArray("weather").get(0) as JSONObject).getInt("id")},
             defaultWeather?.id as Int
     )
 
@@ -117,13 +146,13 @@ public val JSONObject.clouds: Int
 
 public val JSONObject.description: String
     get() = withDefault(
-            {getJSONArray("weather").get(0) as JSONObject getString("description")},
+            {(getJSONArray("weather").get(0) as JSONObject).getString("description")},
             defaultWeather?.description as String
     )
 
 public val JSONObject.icon: String
     get() = withDefault(
-            {getJSONArray("weather").get(0) as JSONObject getString("icon")},
+            {(getJSONArray("weather").get(0) as JSONObject).getString("icon")},
             defaultWeather?.icon as String
     )
 
